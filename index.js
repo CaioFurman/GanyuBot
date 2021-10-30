@@ -1,18 +1,15 @@
-const { Client, Intents, Collection } = require('discord.js');
+const { Client, Intents, Collection, MessageEmbed } = require('discord.js');
 const { token, prefix } = require('./config.json');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS]});
-const fs = require('fs');
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES]});
+const fs = require('fs')
 
-client.botCommands = new Collection();
+client.commands = new Collection();
 
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'))
-for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	if (command.once) {
-		client.once(command.name, (...args) => command.execute(...args));
-	} else {
-		client.on(command.name, (...args) => command.execute(...args));
-	}
+// import commands
+const botCommands = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
+for(const file of botCommands){
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.name, command);
 }
 
 // initialize Ganyu
@@ -27,7 +24,7 @@ client.once('ready', () => {
 // if Ganyu joins a server
 client.on('guildCreate', guild => {
 	console.log(`Joined a new server:\n${guild.name} (${guild.id})\n${guild.cache.memberCount} members.`);
-    client.user.setActivity(`${client.guilds.cache.size} servers, !!help for info.`, {
+    client.user.setActivity(`${client.guilds.cache.size} servers, !!help`, {
       type: 'WATCHING',
     })
 })
@@ -58,9 +55,23 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
-// to do: save all these commands in their own .js file at ./commands
-// HUGE LIST OF BOT COMMANDS!
+// LIST OF BOT COMMANDS!
+// everything is stored at ./commands/
 
+client.on('messageCreate', message => {
+    if (!message.content.startsWith(prefix) || message.author.bot) return; 
+    const args = message.content.slice(prefix.length).split(/ +/);
+    const command = args.shift().toLowerCase();
 
+    if (command === 'help') {
+        client.commands.get('help').execute(message, args);
+    } else if (command === 'play') {
+        client.commands.get ('play').execute(message, args);
+    } else if (command === 'leave') {
+        client.commands.get ('leave').execute(message, args);
+    } else if (command === 'clear') {
+      client.commands.get ('clear').execute(message, args);
+    } 
+ });
 
 client.login(token);
