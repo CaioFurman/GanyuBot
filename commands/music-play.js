@@ -14,6 +14,8 @@ module.exports = {
     name: 'play',
     description: "Plays youtube videos",
     async execute(message, args) {
+	    
+// voice channel identification
         const voiceChannel = message.member.voice.channel;
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
@@ -21,15 +23,19 @@ module.exports = {
             adapterCreator: voiceChannel.guild.voiceAdapterCreator
         });
 
+// warning due to wrong inputs    
         if (!voiceChannel) return message.reply('Please, join a voice channel.')
         if (!args.length) return message.reply('Please, enter what you want to listen or send a URL.')
-
-        const server_queue = queue.get(message.guild.id);
+	    
         let song = {};
+	const server_queue = queue.get(message.guild.id);
+	 
+// URL request 
         if (ytDownload.validateURL(args[0])) {
             const song_info = await ytDownload.getInfo(args[0]);
             song = { title: song_info.videoDetails.title, url: song_info.videoDetails.video_url }
 
+// Search Request		
         } else {            
             const videoFinder = async (query) => {
                 const videoResult = await ytSearch(query);
@@ -46,6 +52,7 @@ module.exports = {
             }
         }
 
+// adding songs in the queue
         if (!server_queue) {
 
             const queue_constructor = {
@@ -74,19 +81,23 @@ module.exports = {
 }
 
 const video_player = async (guild, song) => {
-    const song_queue = queue.get(guild.id);
-
+const song_queue = queue.get(guild.id);
+	
+// queue finished
     if (!song) {
         song_queue.connection.destroy();
         queue.delete(guild.id);
         return;
     }
+	
+// playing requests
     const stream = ytDownload(song.url, {filter: 'audioonly'});
     const resource = createAudioResource( stream, { inputType: StreamType.Arbitrary });
     const player = createAudioPlayer(); 
     song_queue.connection.subscribe(player)
     player.play(resource);
 
+// changing songs
     player.on(AudioPlayerStatus.Idle, () => {
         song_queue.songs.shift();
         video_player(guild, song_queue.songs[0]);
