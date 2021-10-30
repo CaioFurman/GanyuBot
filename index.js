@@ -25,7 +25,7 @@ client.once('ready', () => {
 
 // if Ganyu joins a server
 client.on('guildCreate', guild => {
-	console.log(`Joined a new server:\n${guild.name} (${guild.id})\n${guild.cache.memberCount} members.`);
+	console.log(`Joined a new server:\n${guild.name} (${guild.id})\n${guild.memberCount} members.`);
     client.user.setActivity(`${client.guilds.cache.size} servers, !!help`, {
     	type: 'WATCHING',
     })
